@@ -168,12 +168,14 @@ class TestProductModel(unittest.TestCase):
     def test_find_by_name(self):
         """It should Find a Product by Name"""
         products = ProductFactory.create_batch(5)
-        
+
         for product in products:
             product.create()
-        
+
         product_name = products[0].name
-        count = len([product for product in products if product.name == name])
-        # Call the find_by_name() method on the Product class to retrieve products from the database that have the specified name.
-        # Assert if the count of the found products matches the expected count.
-        # Use a for loop to iterate over the found products and assert that each product's name matches the expected name, to ensure that all the retrieved products have the correct name.
+        count = len([product for product in products if product.name == product_name])
+        found_products = Product.find_by_name(product_name)
+        self.assertEqual(found_products.count(), count)
+
+        for product in found_products:
+            self.assertEqual(product.name, product_name)
