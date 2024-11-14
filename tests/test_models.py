@@ -209,3 +209,84 @@ class TestProductModel(unittest.TestCase):
 
         for product in found_products:
             self.assertEqual(product.price, product_price)
+
+        for product in found_products:
+            self.assertEqual(product.price, product_price)
+
+        product_price_str = str(product_price)
+        found_products = Product.find_by_price(product_price_str)
+
+        self.assertEqual(found_products.count(), count)
+
+        for product in found_products:
+            self.assertEqual(product.price, product_price)
+
+        for product in found_products:
+            self.assertEqual(product.price, product_price)
+
+    def test_find_by_availability(self):
+        """It should Find a Product by availability"""
+        products = ProductFactory.create_batch(10)
+
+        for product in products:
+            product.create()
+
+        product_available = products[0].available
+        count = len([product for product in products if product.available == product_available])
+        found_products = Product.find_by_availability(product_available)
+        self.assertEqual(found_products.count(), count)
+
+        for product in found_products:
+            self.assertEqual(product.available, product_available)
+
+    def test_delete_a_product(self):
+        """It should Delete a product"""
+        products = Product.all()
+        self.assertEqual(products, [])
+        product = ProductFactory()
+        product.id = None
+        product.create()
+        # Assert that it was assigned an id and shows up in the database
+        self.assertIsNotNone(product.id)
+        products = Product.all()
+        self.assertEqual(len(products), 1)
+        product.delete()
+        products = Product.all()
+        self.assertEqual(products, [])
+
+    def test_serialize(self):
+        """It should Serialize a product"""
+        product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
+        self.assertEqual(str(product), "<Product Fedora id=[None]>")
+        serialized_product = product.serialize()
+
+        self.assertTrue(serialized_product is not None)
+        self.assertEqual(serialized_product["id"], None)
+        self.assertEqual(serialized_product["name"], "Fedora")
+        self.assertEqual(serialized_product["description"], "A red hat")
+        self.assertEqual(serialized_product["available"], True)
+        self.assertAlmostEqual(float(serialized_product["price"]), 12.50)
+        self.assertEqual(serialized_product["category"], Category.CLOTHS.name)
+
+    def test_deserialize(self):
+        """It should Deserialize a product"""
+        product = Product(name="Fedora", description="A red hat", price=12.50, available=True, category=Category.CLOTHS)
+        self.assertEqual(str(product), "<Product Fedora id=[None]>")
+        serialized_product = product.serialize()
+        # Assert it raises an error when an empty argument is sent
+        self.assertRaises(DataValidationError, product.deserialize, None)
+
+        # Assert it raises an error available is not boolean
+        serialized_product["available"] = "test an error"
+        self.assertRaises(DataValidationError, product.deserialize, serialized_product)
+
+        serialized_product["available"] = True
+        deserialized_product = product.deserialize(serialized_product)
+
+        self.assertTrue(deserialized_product is not None)
+        self.assertEqual(deserialized_product.id, None)
+        self.assertEqual(deserialized_product.name, "Fedora")
+        self.assertEqual(deserialized_product.description, "A red hat")
+        self.assertEqual(deserialized_product.available, True)
+        self.assertEqual(deserialized_product.price, 12.50)
+        self.assertEqual(deserialized_product.category, Category.CLOTHS)
